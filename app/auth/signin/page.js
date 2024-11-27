@@ -3,11 +3,16 @@
 import { signIn } from "next-auth/react";
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
-import { Suspense } from 'react';
+import { Suspense, useState } from 'react';
+import axios from 'axios';
 
 function SignInContent() {
     const searchParams = useSearchParams();
     const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
 
     const handleGoogleSignIn = async () => {
         try {
@@ -18,6 +23,19 @@ function SignInContent() {
             console.error("Sign in error:", error);
         }
     };
+
+    const handleManualSignUp = async (event) => {
+        event.preventDefault();
+        setError('')
+        setSuccessMessage('');
+
+        try {
+            const response = await axios.post('/api/auth/register', { email, password });
+            setSuccessMessage(response.data.message);
+        } catch (error) {
+            setError(error.response?.data?.error || "Registration failed");
+        }
+    }
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -44,6 +62,37 @@ function SignInContent() {
                     />
                     Continue with Google
                 </button>
+
+                <form onSubmit={handleManualSignUp} className="space-y-4">
+                    <div>
+                        <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+                        <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="password" className="block text-sm border-gray-300 rounded-md shadow-sm p-2">Password</label>
+                        <input
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2"
+                        />
+                    </div>
+                    {error && <p className="text-red-500">{error}</p>}
+                    {successMessage && <p className="text-green-500">{successMessage}</p>}
+                    <button
+                        type="submit"
+                        className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+                    >
+                        Create Account
+                    </button>
+                </form>
             </div>
         </div>
     );
@@ -59,4 +108,4 @@ export default function SignIn() {
             <SignInContent />
         </Suspense>
     );
-}
+}   
