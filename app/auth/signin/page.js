@@ -4,15 +4,39 @@ import { signIn } from "next-auth/react";
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { Suspense, useState } from 'react';
-import axios from 'axios';
 
 function SignInContent() {
     const searchParams = useSearchParams();
     const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
+    const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
-    const [successMessage, setSuccessMessage] = useState('');
+    const [successMessage, setSuccessMessage] = useState(''); s
+    const [loading, setLoading] = useState(false);
+
+    const handleRegistrationClick = async () => {
+        setError('');
+        setSuccessMessage('');
+        setLoading(true);
+
+        try {
+            const response = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, name, name }),
+            });
+
+
+        } catch (error) {
+            console.error("Registration error:", error);
+            setError(error.message || "An error occured");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleGoogleSignIn = async () => {
         try {
@@ -23,19 +47,6 @@ function SignInContent() {
             console.error("Sign in error:", error);
         }
     };
-
-    const handleManualSignUp = async (event) => {
-        event.preventDefault();
-        setError('')
-        setSuccessMessage('');
-
-        try {
-            const response = await axios.post('/api/auth/register', { email, password });
-            setSuccessMessage(response.data.message);
-        } catch (error) {
-            setError(error.response?.data?.error || "Registration failed");
-        }
-    }
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -62,37 +73,41 @@ function SignInContent() {
                     />
                     Continue with Google
                 </button>
-
-                <form onSubmit={handleManualSignUp} className="space-y-4">
-                    <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
-                        <input
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            required
-                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                        />
-                    </div>
-                    <div>
-                        <label htmlFor="password" className="block text-sm border-gray-300 rounded-md shadow-sm p-2">Password</label>
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2"
-                        />
-                    </div>
+                <div className="text-center">
+                    <h2 className="mt-6 text-3xl font-bold text-gray-900">
+                        Create an Account
+                    </h2>
+                    <input
+                        type="text"
+                        placeholder="Name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="border rounded p-2 w-full"
+                    />
+                    <input
+                        type="email"
+                        placeholder="Email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="border rounded p-2 w-full"
+                    />
+                    <input
+                        type="password"
+                        placeholder="Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="border rounded p-2 w-full"
+                    />
+                    <button
+                        onClick={handleRegistrationClick}
+                        className={`w-full flex items-center justify-center gap-2 ${loading ? 'bg-gray-400' : 'bg-blue-500'} text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors`}
+                        disabled={loading}
+                    >
+                        {loading ? 'Registering...' : 'Register'}
+                    </button>
                     {error && <p className="text-red-500">{error}</p>}
                     {successMessage && <p className="text-green-500">{successMessage}</p>}
-                    <button
-                        type="submit"
-                        className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
-                    >
-                        Create Account
-                    </button>
-                </form>
+                </div>
             </div>
         </div>
     );
