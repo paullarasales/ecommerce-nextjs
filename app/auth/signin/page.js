@@ -102,7 +102,7 @@ function SignInContent() {
                         placeholder="Name"
                         value={name}
                         onChange={handleInputChange('name')}
-                    />
+                    />  
                     <InputField
                         type="email"
                         placeholder="Email"
