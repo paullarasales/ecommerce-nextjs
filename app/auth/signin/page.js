@@ -5,109 +5,127 @@ import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { Suspense, useState } from 'react';
 
+function InputField({ type, placeholder, value, onChange }) {
+    return (
+        <input
+            type={type}
+            placeholder={placeholder}
+            value={value}
+            onChange={onChange}
+            className="block w-full px-4 py-2 border rounded-md text-gray-700 placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+        />
+    );
+}
+
 function SignInContent() {
     const searchParams = useSearchParams();
     const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-    const [successMessage, setSuccessMessage] = useState(''); s
-    const [loading, setLoading] = useState(false);
+
+    const [formState, setFormState] = useState({
+        name: '',
+        email: '',
+        password: '',
+        error: '',
+        successMessage: '',
+        loading: false,
+    });
+
+    const handleInputChange = (key) => (e) => {
+        setFormState((prev) => ({ ...prev, [key]: e.target.value }));
+    };
 
     const handleRegistrationClick = async () => {
-        setError('');
-        setSuccessMessage('');
-        setLoading(true);
+        setFormState((prev) => ({ ...prev, error: '', successMessage: '', loading: true }));
 
         try {
-            const response = await fetch('/api/auth/register', {
+            const response = await fetch('/api/register', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email, name, name }),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: formState.email,
+                    password: formState.password,
+                    name: formState.name,
+                }),
             });
 
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Registration failed');
 
-        } catch (error) {
-            console.error("Registration error:", error);
-            setError(error.message || "An error occured");
-        } finally {
-            setLoading(false);
+            setFormState({
+                name: '',
+                email: '',
+                password: '',
+                error: '',
+                successMessage: data.message,
+                loading: false,
+            });
+        } catch (err) {
+            setFormState((prev) => ({ ...prev, error: err.message, loading: false }));
         }
     };
 
     const handleGoogleSignIn = async () => {
         try {
-            await signIn('google', {
-                callbackUrl: callbackUrl,
-            });
-        } catch (error) {
-            console.error("Sign in error:", error);
+            await signIn('google', { callbackUrl });
+        } catch (err) {
+            setFormState((prev) => ({ ...prev, error: 'Google sign-in failed' }));
         }
     };
 
+    const { name, email, password, error, successMessage, loading } = formState;
+
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-            <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-4">
+            <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-6 space-y-6">
                 <div className="text-center">
-                    <h2 className="mt-6 text-3xl font-bold text-gray-900">
-                        Welcome
-                    </h2>
-                    <p className="mt-2 text-sm text-gray-600">
-                        Sign in or create a new account
-                    </p>
+                    <h2 className="text-2xl font-bold text-gray-800">Welcome Back</h2>
+                    <p className="text-sm text-gray-500 mt-1">Sign in to continue</p>
                 </div>
 
                 <button
                     onClick={handleGoogleSignIn}
-                    className="w-full flex items-center justify-center gap-2 bg-white px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                    className="w-full flex items-center justify-center gap-3 bg-gray-100 px-4 py-2 border border-gray-300 rounded-lg shadow-sm hover:bg-gray-200 focus:ring-2 focus:ring-indigo-500 transition"
                 >
                     <Image
                         src="/google-icon.png"
                         alt="Google"
                         width={20}
                         height={20}
-                        className="w-5 h-5"
                     />
-                    Continue with Google
+                    <span>Sign in with Google</span>
                 </button>
-                <div className="text-center">
-                    <h2 className="mt-6 text-3xl font-bold text-gray-900">
-                        Create an Account
-                    </h2>
-                    <input
+
+                <div className="space-y-4">
+                    <h3 className="text-lg font-medium text-gray-700">Create an Account</h3>
+                    <InputField
                         type="text"
                         placeholder="Name"
                         value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className="border rounded p-2 w-full"
+                        onChange={handleInputChange('name')}
                     />
-                    <input
+                    <InputField
                         type="email"
                         placeholder="Email"
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="border rounded p-2 w-full"
+                        onChange={handleInputChange('email')}
                     />
-                    <input
+                    <InputField
                         type="password"
                         placeholder="Password"
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="border rounded p-2 w-full"
+                        onChange={handleInputChange('password')}
                     />
                     <button
                         onClick={handleRegistrationClick}
-                        className={`w-full flex items-center justify-center gap-2 ${loading ? 'bg-gray-400' : 'bg-blue-500'} text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors`}
+                        className={`w-full px-4 py-2 text-white font-medium rounded-lg transition-all ${loading ? 'bg-gray-400' : 'bg-indigo-500 hover:bg-indigo-600'}`}
                         disabled={loading}
                     >
-                        {loading ? 'Registering...' : 'Register'}
+                        {loading ? 'Registering...' : 'Sign Up'}
                     </button>
-                    {error && <p className="text-red-500">{error}</p>}
-                    {successMessage && <p className="text-green-500">{successMessage}</p>}
                 </div>
+
+                {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+                {successMessage && <p className="text-green-500 text-sm mt-2">{successMessage}</p>}
             </div>
         </div>
     );
@@ -115,12 +133,8 @@ function SignInContent() {
 
 export default function SignIn() {
     return (
-        <Suspense fallback={
-            <div className="min-h-screen flex items-center justify-center">
-                <div>Loading...</div>
-            </div>
-        }>
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-gray-600">Loading...</div>}>
             <SignInContent />
         </Suspense>
     );
-}   
+}

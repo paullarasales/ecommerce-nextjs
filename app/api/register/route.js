@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import { regiseterUser } from "@/app/actions/register";
+import { registerUser } from "@/app/actions/register";
 
 export async function POST(request) {
     const { email, password, name } = await request.json();
+    console.log("Received data in API:", { email, password, name });
 
     try {
         const response = await registerUser({ email, password, name });
