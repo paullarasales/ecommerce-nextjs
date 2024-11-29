@@ -17,7 +17,7 @@ const HeroSection = () => {
             </div>
             <div className="ml-2">
                 <Image
-                    src="/yamaha.png" // Replace with your image path
+                    src="/yamaha.png"
                     alt="Superbike"
                     width={631}
                     height={500}
